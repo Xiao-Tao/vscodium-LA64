@@ -1,0 +1,312 @@
+From 7922f7c3deda790e77c00954b9351ce423ff3fa1 Mon Sep 17 00:00:00 2001
+From: Mingtao Zhou <mingtaoxt@163.com>
+Date: Fri, 28 Jul 2023 10:49:11 +0800
+Subject: [PATCH 2/3] fix loongarch64 build
+
+1. Using Electron 22.3.16
+2. Using esbuild 0.18.16
+3. Support building rpm packages
+---
+ .yarnrc                      |  2 +-
+ build/checksums/electron.txt |  1 +
+ build/checksums/nodejs.txt   |  1 +
+ build/linux/rpm/dep-lists.js | 89 +++++++++++++++++++++++++++++++++-
+ build/linux/rpm/dep-lists.ts | 93 ++++++++++++++++++++++++++++++++++++
+ build/package.json           |  2 +-
+ cgmanifest.json              |  2 +-
+ extensions/package.json      |  2 +-
+ package.json                 |  2 +-
+ 9 files changed, 188 insertions(+), 6 deletions(-)
+
+diff --git a/.yarnrc b/.yarnrc
+index 3af2059..7328d74 100644
+--- a/.yarnrc
++++ b/.yarnrc
+@@ -1,5 +1,5 @@
+ disturl "https://electronjs.org/headers"
+-target "22.3.14"
++target "22.3.16"
+ ms_build_id "21893604"
+ runtime "electron"
+ build_from_source "true"
+diff --git a/build/checksums/electron.txt b/build/checksums/electron.txt
+index beb2b97..95d3528 100644
+--- a/build/checksums/electron.txt
++++ b/build/checksums/electron.txt
+@@ -8,6 +8,7 @@ d847c59f3835749dcdd5376daefb3a5992f1ed5d7693f871328296e1388fb69d *electron-v22.3
+ bf589c74f07fe11586ffcf8c122d34b91c5ced08d54532ee883d1e025b6d1b02 *electron-v22.3.14-linux-armv7l.zip
+ 28d0eda61ea736375c549d0955f36b7d3e3c2019453ef83d793dae8b0d74f461 *electron-v22.3.14-linux-x64-symbols.zip
+ 89b72e40fb8b9106deda3e6ffa30dd80beaa8f2e2a9d037b55c034a5a27a7b60 *electron-v22.3.14-linux-x64.zip
++c2f65c0326f685199c3f9430274a19266632731147c65446b977353588bc735a *electron-v22.3.16-linux-loong64.zip
+ b9ba15fcf7c60cf57e95fae731bc0c336e131ed4fac91b4c59d50a28407ca0b0 *electron-v22.3.14-win32-arm64-pdb.zip
+ 9f375d01feeb9e28f9c0913a4e22be900c0a7ff4e51449bb9b859ce1bd18f9f3 *electron-v22.3.14-win32-arm64-symbols.zip
+ 17e354aca0683f79d79f7fa7ecfa8a4381b356d04fa45ec0aa85b5f048151c10 *electron-v22.3.14-win32-arm64.zip
+diff --git a/build/checksums/nodejs.txt b/build/checksums/nodejs.txt
+index 5229a5b..3210315 100644
+--- a/build/checksums/nodejs.txt
++++ b/build/checksums/nodejs.txt
+@@ -3,5 +3,6 @@ f9f02f7872e2e8ee54320fce13deb9d56904f32bb0615b6e21aa3371d8899150  node-v16.17.1-
+ adc7032888d4e672a4aac886baede8c04fccdd1a2e7ab4bcf325e3f336f44a3d  node-v16.17.1-linux-arm64.tar.gz
+ aeab05e35f1d2824ecfb88ca321f1408b44d292b2775f2890972c828e00216d0  node-v16.17.1-linux-armv7l.tar.gz
+ da5658693243b3ecf6a4cba6751a71df1eb9e9703ca93b42a9404aed85f58ad0  node-v16.17.1-linux-x64.tar.gz
++445f20b36e8830c4385d7d29fbf9b712303c59e8034bced715fd53b64a0d6a17  node-v16.17.1-linux-loong64.tar.gz
+ f518a70dcab7c3fac5b2e1ef100b4f628edfb160f4fafa9a94ef222da8a6e9ab  win-x64/node.exe
+ 2393aff88be19dbe0205cbde4ff0c1d89911b15de5c99c80f6e5e29604eecd12  win-x86/node.exe
+diff --git a/build/linux/rpm/dep-lists.js b/build/linux/rpm/dep-lists.js
+index c836348..ee08555 100644
+--- a/build/linux/rpm/dep-lists.js
++++ b/build/linux/rpm/dep-lists.js
+@@ -287,6 +287,93 @@ exports.referenceGeneratedDepsByArch = {
+         'rpmlib(FileDigests) <= 4.6.0-1',
+         'rtld(GNU_HASH)',
+         'xdg-utils'
++    ],
++    'loongarch64': [
++        'ca-certificates',
++        'ld-linux-loongarch-lp64d.so.1()(64bit)',
++        'ld-linux-loongarch-lp64d.so.1(GLIBC_2.36)(64bit)',
++        'libX11.so.6()(64bit)',
++        'libXcomposite.so.1()(64bit)',
++        'libXdamage.so.1()(64bit)',
++        'libXext.so.6()(64bit)',
++        'libXfixes.so.3()(64bit)',
++        'libXrandr.so.2()(64bit)',
++        'libXtst.so.6()(64bit)',
++        'libasound.so.2()(64bit)',
++        'libasound.so.2(ALSA_0.9)(64bit)',
++        'libasound.so.2(ALSA_0.9.0rc4)(64bit)',
++        'libatk-1.0.so.0()(64bit)',
++        'libatk-bridge-2.0.so.0()(64bit)',
++        'libatspi.so.0()(64bit)',
++        'libc.so.6()(64bit)',
++        'libc.so.6(GLIBC_2.36)(64bit)',
++        'libcairo.so.2()(64bit)',
++        'libcups.so.2()(64bit)',
++        'libcurl.so.4()(64bit)',
++        'libdbus-1.so.3()(64bit)',
++        'libdbus-1.so.3(LIBDBUS_1_3)(64bit)',
++        'libdrm.so.2()(64bit)',
++        'libexpat.so.1()(64bit)',
++        'libffi.so.8()(64bit)',
++        'libffi.so.8(LIBFFI_BASE_8.0)(64bit)',
++        'libgbm.so.1()(64bit)',
++        'libgcc_s.so.1()(64bit)',
++        'libgcc_s.so.1(GCC_3.0)(64bit)',
++        'libgcc_s.so.1(GCC_4.2.0)(64bit)',
++        'libgcc_s.so.1(GCC_4.5.0)(64bit)',
++        'libgio-2.0.so.0()(64bit)',
++        'libglib-2.0.so.0()(64bit)',
++        'libgobject-2.0.so.0()(64bit)',
++        'libgtk-3.so.0()(64bit)',
++        'libm.so.6()(64bit)',
++        'libm.so.6(GLIBC_2.36)(64bit)',
++        'libnspr4.so()(64bit)',
++        'libnss3.so()(64bit)',
++        'libnss3.so(NSS_3.11)(64bit)',
++        'libnss3.so(NSS_3.12)(64bit)',
++        'libnss3.so(NSS_3.12.1)(64bit)',
++        'libnss3.so(NSS_3.2)(64bit)',
++        'libnss3.so(NSS_3.22)(64bit)',
++        'libnss3.so(NSS_3.3)(64bit)',
++        'libnss3.so(NSS_3.4)(64bit)',
++        'libnss3.so(NSS_3.5)(64bit)',
++        'libnss3.so(NSS_3.9.2)(64bit)',
++        'libnssutil3.so()(64bit)',
++        'libnssutil3.so(NSSUTIL_3.12.3)(64bit)',
++        'libpango-1.0.so.0()(64bit)',
++        'libsecret-1.so.0()(64bit)',
++        'libsmime3.so()(64bit)',
++        'libsmime3.so(NSS_3.10)(64bit)',
++        'libsmime3.so(NSS_3.2)(64bit)',
++        'libssl3.so(NSS_3.28)(64bit)',
++        'libstdc++.so.6()(64bit)',
++        'libstdc++.so.6(CXXABI_1.3)(64bit)',
++        'libstdc++.so.6(CXXABI_1.3.5)(64bit)',
++        'libstdc++.so.6(CXXABI_1.3.8)(64bit)',
++        'libstdc++.so.6(CXXABI_1.3.9)(64bit)',
++        'libstdc++.so.6(GLIBCXX_3.4)(64bit)',
++        'libstdc++.so.6(GLIBCXX_3.4.11)(64bit)',
++        'libstdc++.so.6(GLIBCXX_3.4.14)(64bit)',
++        'libstdc++.so.6(GLIBCXX_3.4.15)(64bit)',
++        'libstdc++.so.6(GLIBCXX_3.4.18)(64bit)',
++        'libstdc++.so.6(GLIBCXX_3.4.19)(64bit)',
++        'libstdc++.so.6(GLIBCXX_3.4.20)(64bit)',
++        'libstdc++.so.6(GLIBCXX_3.4.21)(64bit)',
++        'libstdc++.so.6(GLIBCXX_3.4.22)(64bit)',
++        'libstdc++.so.6(GLIBCXX_3.4.26)(64bit)',
++        'libstdc++.so.6(GLIBCXX_3.4.29)(64bit)',
++        'libstdc++.so.6(GLIBCXX_3.4.30)(64bit)',
++        'libstdc++.so.6(GLIBCXX_3.4.32)(64bit)',
++        'libstdc++.so.6(GLIBCXX_3.4.5)(64bit)',
++        'libstdc++.so.6(GLIBCXX_3.4.9)(64bit)',
++        'libxcb.so.1()(64bit)',
++        'libxkbcommon.so.0()(64bit)',
++        'libxkbcommon.so.0(V_0.5.0)(64bit)',
++        'libxkbfile.so.1()(64bit)',
++        'rpmlib(FileDigests) <= 4.6.0-1',
++        'rtld(GNU_HASH)',
++        'xdg-utils',
+     ]
++
+ };
+-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZGVwLWxpc3RzLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiZGVwLWxpc3RzLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7QUFBQTs7O2dHQUdnRzs7O0FBRWhHLCtHQUErRztBQUMvRywrREFBK0Q7QUFDbEQsUUFBQSxjQUFjLEdBQUc7SUFDN0IsaUJBQWlCO0lBQ2pCLHdCQUF3QjtJQUN4Qiw2QkFBNkI7SUFDN0IsNkJBQTZCO0lBQzdCLGdDQUFnQztJQUNoQyx5QkFBeUI7SUFDekIsdUJBQXVCO0lBQ3ZCLFdBQVcsQ0FBQyxpQkFBaUI7Q0FDN0IsQ0FBQztBQUVXLFFBQUEsNEJBQTRCLEdBQUc7SUFDM0MsUUFBUSxFQUFFO1FBQ1QsaUJBQWlCO1FBQ2pCLCtCQUErQjtRQUMvQiwwQ0FBMEM7UUFDMUMsd0NBQXdDO1FBQ3hDLHNCQUFzQjtRQUN0Qiw2QkFBNkI7UUFDN0IsMEJBQTBCO1FBQzFCLHVCQUF1QjtRQUN2Qix5QkFBeUI7UUFDekIseUJBQXlCO1FBQ3pCLHlCQUF5QjtRQUN6QixpQ0FBaUM7UUFDakMsc0NBQXNDO1FBQ3RDLDBCQUEwQjtRQUMxQixpQ0FBaUM7UUFDakMsd0JBQXdCO1FBQ3hCLG9CQUFvQjtRQUNwQiw4QkFBOEI7UUFDOUIsOEJBQThCO1FBQzlCLDhCQUE4QjtRQUM5Qiw4QkFBOEI7UUFDOUIsOEJBQThCO1FBQzlCLDhCQUE4QjtRQUM5QiwrQkFBK0I7UUFDL0IsNkJBQTZCO1FBQzdCLCtCQUErQjtRQUMvQiwrQkFBK0I7UUFDL0IsK0JBQStCO1FBQy9CLDZCQUE2QjtRQUM3Qiw2QkFBNkI7UUFDN0IsNkJBQTZCO1FBQzdCLDZCQUE2QjtRQUM3Qiw2QkFBNkI7UUFDN0Isd0JBQXdCO1FBQ3hCLHVCQUF1QjtRQUN2Qix5QkFBeUI7UUFDekIscUJBQXFCO1FBQ3JCLGdDQUFnQztRQUNoQyxzQkFBc0I7UUFDdEIsd0JBQXdCO1FBQ3hCLHNCQUFzQjtRQUN0Qix3QkFBd0I7UUFDeEIsK0JBQStCO1FBQy9CLDBCQUEwQjtR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
+\ No newline at end of file
++//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZGVwLWxpc3RzLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiZGVwLWxpc3RzLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7QUFBQTs7O2dHQUdnRzs7O0FBRWhHLCtHQUErRztBQUMvRywrREFBK0Q7QUFDbEQsUUFBQSxjQUFjLEdBQUc7SUFDN0IsaUJBQWlCO0lBQ2pCLHdCQUF3QjtJQUN4Qiw2QkFBNkI7SUFDN0IsNkJBQTZCO0lBQzdCLGdDQUFnQztJQUNoQyx5QkFBeUI7SUFDekIsdUJBQXVCO0lBQ3ZCLFdBQVcsQ0FBQyxpQkFBaUI7Q0FDN0IsQ0FBQztBQUVXLFFBQUEsNEJBQTRCLEdBQUc7SUFDM0MsUUFBUSxFQUFFO1FBQ1QsaUJBQWlCO1FBQ2pCLCtCQUErQjtRQUMvQiwwQ0FBMEM7UUFDMUMsd0NBQXdDO1FBQ3hDLHNCQUFzQjtRQUN0Qiw2QkFBNkI7UUFDN0IsMEJBQTBCO1FBQzFCLHVCQUF1QjtRQUN2Qix5QkFBeUI7UUFDekIseUJBQXlCO1FBQ3pCLHlCQUF5QjtRQUN6QixpQ0FBaUM7UUFDakMsc0NBQXNDO1FBQ3RDLDBCQUEwQjtRQUMxQixpQ0FBaUM7UUFDakMsd0JBQXdCO1FBQ3hCLG9CQUFvQjtRQUNwQiw4QkFBOEI7UUFDOUIsOEJBQThCO1FBQzlCLDhCQUE4QjtRQUM5Qiw4QkFBOEI7UUFDOUIsOEJBQThCO1FBQzlCLDhCQUE4QjtRQUM5QiwrQkFBK0I7UUFDL0IsNkJBQTZCO1FBQzdCLCtCQUErQjtRQUMvQiwrQkFBK0I7UUFDL0IsK0JBQStCO1FBQy9CLDZCQUE2QjtRQUM3Qiw2QkFBNkI7UUFDN0IsNkJBQTZCO1FBQzdCLDZCQUE2QjtRQUM3Qiw2QkFBNkI7UUFDN0Isd0JBQXdCO1FBQ3hCLHVCQUF1QjtRQUN2Qix5QkFBeUI7UUFDekIscUJBQXFCO1FBQ3JCLGdDQUFnQztRQUNoQyxzQkFBc0I7UUFDdEIsd0JBQXdCO1FBQ3hCLHNCQUFzQjtRQUN0Qix3QkFBd0I7UUFDeEIsK0JBQStCO1FBQy9CLDBCQUEwQjtR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
+diff --git a/build/linux/rpm/dep-lists.ts b/build/linux/rpm/dep-lists.ts
+index c262448..e11dd13 100644
+--- a/build/linux/rpm/dep-lists.ts
++++ b/build/linux/rpm/dep-lists.ts
+@@ -286,5 +286,98 @@ export const referenceGeneratedDepsByArch = {
+ 		'rpmlib(FileDigests) <= 4.6.0-1',
+ 		'rtld(GNU_HASH)',
+ 		'xdg-utils'
++	],
++	'loongarch64': [
++		'ca-certificates',
++		'ld.so.1()(64bit)',
++		'ld.so.1(GLIBC_2.27)(64bit)',
++		'libX11.so.6()(64bit)',
++		'libXcomposite.so.1()(64bit)',
++		'libXdamage.so.1()(64bit)',
++		'libXext.so.6()(64bit)',
++		'libXfixes.so.3()(64bit)',
++		'libXrandr.so.2()(64bit)',
++		'libXtst.so.6()(64bit)',
++		'libasound.so.2()(64bit)',
++		'libasound.so.2(ALSA_0.9)(64bit)',
++		'libasound.so.2(ALSA_0.9.0rc4)(64bit)',
++		'libatk-1.0.so.0()(64bit)',
++		'libatk-bridge-2.0.so.0()(64bit)',
++		'libatspi.so.0()(64bit)',
++		'libc.so.6()(64bit)',
++		'libc.so.6(GLIBC_2.27)(64bit)',
++		'libc.so.6(GLIBC_2.28)(64bit)',
++		'libcairo.so.2()(64bit)',
++		'libcups.so.2()(64bit)',
++		'libcurl.so.4()(64bit)',
++		'libdbus-1.so.3()(64bit)',
++		'libdbus-1.so.3(LIBDBUS_1_3)(64bit)',
++		'libdl.so.2()(64bit)',
++		'libdl.so.2(GLIBC_2.27)(64bit)',
++		'libdrm.so.2()(64bit)',
++		'libexpat.so.1()(64bit)',
++		'libgbm.so.1()(64bit)',
++		'libgcc_s.so.1()(64bit)',
++		'libgcc_s.so.1(GCC_3.0)(64bit)',
++		'libgcc_s.so.1(GCC_4.2.0)(64bit)',
++		'libgcc_s.so.1(GCC_4.5.0)(64bit)',
++		'libgio-2.0.so.0()(64bit)',
++		'libglib-2.0.so.0()(64bit)',
++		'libgobject-2.0.so.0()(64bit)',
++		'libgtk-3.so.0()(64bit)',
++		'libm.so.6()(64bit)',
++		'libm.so.6(GLIBC_2.27)(64bit)',
++		'libnspr4.so()(64bit)',
++		'libnss3.so()(64bit)',
++		'libnss3.so(NSS_3.11)(64bit)',
++		'libnss3.so(NSS_3.12)(64bit)',
++		'libnss3.so(NSS_3.12.1)(64bit)',
++		'libnss3.so(NSS_3.2)(64bit)',
++		'libnss3.so(NSS_3.22)(64bit)',
++		'libnss3.so(NSS_3.3)(64bit)',
++		'libnss3.so(NSS_3.4)(64bit)',
++		'libnss3.so(NSS_3.5)(64bit)',
++		'libnss3.so(NSS_3.9.2)(64bit)',
++		'libnssutil3.so()(64bit)',
++		'libnssutil3.so(NSSUTIL_3.12.3)(64bit)',
++		'libpango-1.0.so.0()(64bit)',
++		'libpthread.so.0()(64bit)',
++		'libpthread.so.0(GLIBC_2.0)(64bit)',
++		'libpthread.so.0(GLIBC_2.12)(64bit)',
++		'libpthread.so.0(GLIBC_2.2)(64bit)',
++		'libpthread.so.0(GLIBC_2.2.3)(64bit)',
++		'libpthread.so.0(GLIBC_2.3.2)(64bit)',
++		'libpthread.so.0(GLIBC_2.3.3)(64bit)',
++		'libpthread.so.0(GLIBC_2.3.4)(64bit)',
++		'libsecret-1.so.0()(64bit)',
++		'libsmime3.so()(64bit)',
++		'libsmime3.so(NSS_3.10)(64bit)',
++		'libsmime3.so(NSS_3.2)(64bit)',
++		'libssl3.so(NSS_3.28)(64bit)',
++		'libstdc++.so.6()(64bit)',
++		'libstdc++.so.6(CXXABI_1.3)(64bit)',
++		'libstdc++.so.6(CXXABI_1.3.5)(64bit)',
++		'libstdc++.so.6(CXXABI_1.3.8)(64bit)',
++		'libstdc++.so.6(CXXABI_1.3.9)(64bit)',
++		'libstdc++.so.6(GLIBCXX_3.4)(64bit)',
++		'libstdc++.so.6(GLIBCXX_3.4.11)(64bit)',
++		'libstdc++.so.6(GLIBCXX_3.4.14)(64bit)',
++		'libstdc++.so.6(GLIBCXX_3.4.15)(64bit)',
++		'libstdc++.so.6(GLIBCXX_3.4.18)(64bit)',
++		'libstdc++.so.6(GLIBCXX_3.4.19)(64bit)',
++		'libstdc++.so.6(GLIBCXX_3.4.20)(64bit)',
++		'libstdc++.so.6(GLIBCXX_3.4.21)(64bit)',
++		'libstdc++.so.6(GLIBCXX_3.4.22)(64bit)',
++		'libstdc++.so.6(GLIBCXX_3.4.5)(64bit)',
++		'libstdc++.so.6(GLIBCXX_3.4.9)(64bit)',
++		'libutil.so.1()(64bit)',
++		'libutil.so.1(GLIBC_2.27)(64bit)',
++		'libxcb.so.1()(64bit)',
++		'libxkbcommon.so.0()(64bit)',
++		'libxkbcommon.so.0(V_0.5.0)(64bit)',
++		'libxkbfile.so.1()(64bit)',
++		'rpmlib(FileDigests) <= 4.6.0-1',
++		'rtld(GNU_HASH)',
++		'xdg-utils',
+ 	]
+ };
+diff --git a/build/package.json b/build/package.json
+index df7b779..0f01cd2 100644
+--- a/build/package.json
++++ b/build/package.json
+@@ -47,7 +47,7 @@
+     "commander": "^7.0.0",
+     "debug": "^4.3.2",
+     "electron-osx-sign": "^0.4.16",
+-    "esbuild": "0.17.14",
++    "esbuild": "0.18.16",
+     "extract-zip": "^2.0.1",
+     "gulp-merge-json": "^2.1.1",
+     "gulp-shell": "^0.8.0",
+diff --git a/cgmanifest.json b/cgmanifest.json
+index d5669cd..a1d279e 100644
+--- a/cgmanifest.json
++++ b/cgmanifest.json
+@@ -533,7 +533,7 @@
+ 			},
+ 			"isOnlyProductionDependency": true,
+ 			"license": "MIT",
+-			"version": "22.3.14"
++			"version": "22.3.16"
+ 		},
+ 		{
+ 			"component": {
+diff --git a/extensions/package.json b/extensions/package.json
+index f5f0b7e..b1cd0b0 100644
+--- a/extensions/package.json
++++ b/extensions/package.json
+@@ -11,7 +11,7 @@
+   },
+   "devDependencies": {
+     "@parcel/watcher": "2.1.0",
+-    "esbuild": "0.17.14",
++    "esbuild": "0.18.16",
+     "vscode-grammar-updater": "^1.1.0"
+   }
+ }
+diff --git a/package.json b/package.json
+index c126cce..0677e6d 100644
+--- a/package.json
++++ b/package.json
+@@ -149,7 +149,7 @@
+     "cssnano": "^4.1.11",
+     "debounce": "^1.0.0",
+     "deemon": "^1.8.0",
+-    "electron": "22.3.14",
++    "electron": "22.3.16",
+     "eslint": "8.36.0",
+     "eslint-plugin-header": "3.1.1",
+     "eslint-plugin-jsdoc": "^39.3.2",
+-- 
+2.38.1
+
