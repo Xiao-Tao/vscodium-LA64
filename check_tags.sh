@@ -301,6 +301,39 @@ if [[ "${ASSETS}" != "null" ]]; then
         echo "Already have all the Linux PowerPC64LE builds"
       fi
 
+    # linux-loong64
+    elif [[ "${VSCODE_ARCH}" == "loong64" ]]; then
+      SHOULD_BUILD_DEB="no"
+      SHOULD_BUILD_APPIMAGE="no"
+      SHOULD_BUILD_RPM="yes"
+      SHOULD_BUILD_TAR="yes"
+
+      if [[ -z $( contains "loongarch64.rpm" ) ]]; then
+        echo "Building on Linux LoongArch64 because we have no RPM"
+        export SHOULD_BUILD="yes"
+      else
+        export SHOULD_BUILD_RPM="no"
+      fi
+
+      if [[ -z $( contains "${APP_NAME}-linux-loong64-${RELEASE_VERSION}.tar.gz" ) ]]; then
+        echo "Building on Linux LoongArch64 because we have no TAR"
+        export SHOULD_BUILD="yes"
+      else
+        export SHOULD_BUILD_TAR="no"
+      fi
+
+      if [[ -z $( contains "${APP_NAME_LC}-reh-linux-loong64-${RELEASE_VERSION}.tar.gz" ) ]]; then
+        echo "Building on Linux LoongArch64 because we have no REH archive"
+        export SHOULD_BUILD="yes"
+      else
+        export SHOULD_BUILD_REH="no"
+      fi
+
+      if [[ "${SHOULD_BUILD}" != "yes" ]]; then
+        echo "Already have all the Linux PowerPC64LE builds"
+      fi
+
+
     # linux-x64
     else
       if [[ -z $( contains "amd64.deb" ) ]]; then
